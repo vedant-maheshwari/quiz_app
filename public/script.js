@@ -34,10 +34,20 @@ socket.on('lobbyCreated', (code) => {
 socket.on('playerJoined', (players) => {
     document.getElementById('lobbyInfo').innerText = `Lobby: ${lobbyCode}`;
     document.getElementById('playersList').innerText = `Players: ${players.map(p => p.name).join(', ')}`;
+    if (!isHost) {
+        document.getElementById('lobbyInfo').innerText = 'Waiting for host to start the quiz';
+        document.getElementById('lobby').style.display = 'none'; // Hide the join lobby section
+        document.getElementById('playersList').style.display = 'none'; // Hide the players list
+        document.getElementById('startQuizButton').style.display = 'none'; // Hide the start quiz button
+    }
 });
 
 socket.on('quizStarted', (question) => {
     document.getElementById('lobbyInfo').innerText = 'Quiz has started!';
+    document.getElementById('lobbyInfo').style.opacity = 1;
+    setTimeout(() => {
+        document.getElementById('lobbyInfo').style.opacity = 0;
+    }, 1000);
     document.getElementById('playersList').style.display = 'none'; // Hide the players list
     document.getElementById('startQuizButton').style.display = 'none'; // Hide the start quiz button
     document.getElementById('quizContainer').style.display = 'block'; // Show the quiz container
@@ -51,6 +61,7 @@ socket.on('nextQuestion', (question) => {
 socket.on('quizEnded', () => {
     document.getElementById('quizContainer').style.display = 'none'; // Hide the quiz container
     document.getElementById('leaderboard').style.display = 'block'; // Show the leaderboard
+    document.getElementById('leaderboardList').innerHTML = '<li>Waiting for others to finish...</li>'; // Show waiting message
 });
 
 socket.on('leaderboard', (players) => {
@@ -63,11 +74,15 @@ socket.on('leaderboard', (players) => {
     });
 });
 
+socket.on('playerLeft', (players) => {
+    document.getElementById('playersList').innerText = `Players: ${players.map(p => p.name).join(', ')}`;
+});
+
 function displayQuestion(question) {
     const quizContainer = document.getElementById('quizContainer');
     quizContainer.innerHTML = `
         <h2>${question.question}</h2>
-        <ul>
+        <ul id="options">
             ${question.options.map(option => `<li><button onclick="submitAnswer('${option}')">${option}</button></li>`).join('')}
         </ul>
     `;

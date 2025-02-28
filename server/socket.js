@@ -91,15 +91,14 @@ module.exports = (io) => {
             for (const [lobbyCode, lobby] of lobbies.entries()) {
                 const playerIndex = lobby.players.findIndex((player) => player.id === socket.id);
                 if (playerIndex !== -1) {
-                    lobby.players.splice(playerIndex, 1);
-                    if (lobby.players.length > 0) {
-                        if (socket.id === lobby.host) {
-                            lobby.host = lobby.players[0].id;
-                            io.to(lobbyCode).emit('newHost', lobby.players[0].name);
-                        }
-                        io.to(lobbyCode).emit('playerLeft', lobby.players);
-                    } else {
+                    const leavingPlayer = lobby.players.splice(playerIndex, 1)[0];
+                    if (socket.id === lobby.host) {
+                        // If the host disconnects, destroy the lobby
+                        io.to(lobbyCode).emit('lobbyClosed');
                         lobbies.delete(lobbyCode);
+                    } else {
+                        // Notify remaining players
+                        io.to(lobbyCode).emit('playerLeft', lobby.players);
                     }
                 }
             }

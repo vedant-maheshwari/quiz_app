@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz App</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="app">
@@ -17,10 +17,13 @@
             <button onclick="joinLobby()">Join Lobby</button>
         </div>
         <div id="lobbyInfo"></div>
-        <div id="playersList" style="display: none;"></div>
-        <button id="startQuizButton" style="display: none;">Start Quiz</button>
-        <div id="quizContainer" style="display: none;"></div>
-        <div id="leaderboard" style="display: none;">
+        <div id="playersList" class="hidden"></div>
+        <button id="startQuizButton" class="hidden">Start Quiz</button>
+        <div id="quizContainer" class="hidden">
+            <h2 id="question"></h2>
+            <ul id="options"></ul>
+        </div>
+        <div id="leaderboard" class="hidden">
             <h2>Leaderboard</h2>
             <ul id="leaderboardList"></ul>
         </div>

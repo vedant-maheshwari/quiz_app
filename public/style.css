@@ -1,21 +1,100 @@
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
+    font-family: 'Roboto', sans-serif;
     background-color: #f4f4f4;
     margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#app {
+    background: white;
     padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
 }
 
-.hide {
-    display: none;
+h1 {
+    margin-bottom: 20px;
+    color: #333;
 }
 
-#lobbyPlayers, #quiz, #leaderboard {
-    margin-top: 20px;
+#lobby, #quizContainer, #leaderboard {
+    margin-bottom: 20px;
+}
+
+input, button {
+    padding: 10px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 button {
-    margin: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.hidden {
+    display: none;
+}
+
+#quizContainer h2, #quizContainer ul {
+    margin: 0;
+    padding: 0;
+}
+
+#quizContainer ul {
+    list-style: none;
+    padding: 0;
+}
+
+#quizContainer li {
+    margin: 10px 0;
+}
+
+#quizContainer button {
+    background-color: #28a745;
+    width: auto;
+}
+
+#quizContainer button:hover {
+    background-color: #218838;
+}
+
+#leaderboard h2 {
+    margin-bottom: 10px;
+}
+
+#leaderboardList {
+    list-style: none;
+    padding: 0;
+}
+
+#leaderboardList li {
+    margin: 5px 0;
+    padding: 5px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+}
+
+#lobbyInfo {
+    font-size: 18px;
+    color: #555;
+    transition: opacity 1s;
 }
