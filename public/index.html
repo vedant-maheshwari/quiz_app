@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <h1>Quiz App</h1>
+        <div id="lobby">
+            <input type="text" id="hostName" placeholder="Enter your name">
+            <button onclick="createLobby()">Create Lobby</button>
+            <input type="text" id="lobbyCode" placeholder="Enter lobby code">
+            <input type="text" id="playerName" placeholder="Enter your name">
+            <button onclick="joinLobby()">Join Lobby</button>
+        </div>
+        <div id="lobbyInfo"></div>
+        <div id="playersList" style="display: none;"></div>
+        <button id="startQuizButton" style="display: none;">Start Quiz</button>
+        <div id="quizContainer" style="display: none;"></div>
+        <div id="leaderboard" style="display: none;">
+            <h2>Leaderboard</h2>
+            <ul id="leaderboardList"></ul>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
