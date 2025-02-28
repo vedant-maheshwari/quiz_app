@@ -5,7 +5,9 @@ let isHost = false;
 
 function createLobby() {
     const hostName = document.getElementById('hostName').value;
-    socket.emit('createLobby', hostName);
+    const topic = document.getElementById('topic').value;
+    const numQuestions = document.getElementById('numQuestions').value;
+    socket.emit('createLobby', hostName, topic, numQuestions);
 }
 
 function joinLobby() {
@@ -83,7 +85,10 @@ function displayQuestion(question) {
     quizContainer.innerHTML = `
         <h2>${question.question}</h2>
         <ul id="options">
-            ${question.options.map(option => `<li><button onclick="submitAnswer('${option}')">${option}</button></li>`).join('')}
+            ${question.options.map(option => {
+                const letter = option.split(')')[0].trim(); // Extract the letter from the option
+                return `<li><button onclick="submitAnswer('${letter}')">${option}</button></li>`;
+            }).join('')}
         </ul>
     `;
 }
