@@ -22,9 +22,9 @@ app.get('/', (req, res) => {
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-const generateQuizQuestions = async (topic, numQuestions = 5) => {
+const generateQuizQuestions = async (topic, numQuestions = 5, language = 'en') => {
     const prompt = `
-        Generate ${numQuestions} quiz questions about ${topic}.
+        Generate ${numQuestions} quiz questions about ${topic} in ${language}.
         Each question should be multiple choice with 4 options (A, B, C, D) and specify the correct answer.
         Format the output as a JSON array where each item is a dictionary with:
         "question", "options", and "correct_answer".
@@ -76,12 +76,12 @@ io.on('connection', async (socket) => {
     console.log('A user connected:', socket.id);
 
     // Create a new lobby
-    socket.on('createLobby', async (hostName, topic, numQuestions) => {
+    socket.on('createLobby', async (hostName, topic, numQuestions, language) => {
         const lobbyCode = generateLobbyCode();
         let questions = [];
 
         try {
-            questions = await generateQuizQuestions(topic, numQuestions);
+            questions = await generateQuizQuestions(topic, numQuestions, language);
         } catch (error) {
             console.error('Error generating questions:', error);
             socket.emit('error', 'Failed to generate questions');

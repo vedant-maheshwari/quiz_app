@@ -7,7 +7,8 @@ function createLobby() {
     const hostName = document.getElementById('hostName').value;
     const topic = document.getElementById('topic').value;
     const numQuestions = document.getElementById('numQuestions').value;
-    socket.emit('createLobby', hostName, topic, numQuestions);
+    const language = document.getElementById('language').value; // Get the selected language
+    socket.emit('createLobby', hostName, topic, numQuestions, language);
 }
 
 function joinLobby() {
