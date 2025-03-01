@@ -56,7 +56,7 @@ function joinLobby() {
 
 function startQuiz() {
     if (!isHost) return;
-    console.log('Starting quiz for lobby:', lobbyCode); // Debug
+    console.log('Starting quiz for lobby:', lobbyCode);
     socket.emit('startQuiz', lobbyCode);
 }
 
@@ -70,10 +70,10 @@ socket.on('lobbyCreated', (code) => {
     const lobbyInfo = document.getElementById('lobbyInfo');
     lobbyInfo.innerText = `Lobby Created! Code: ${code}`;
     lobbyInfo.style.display = 'block';
-    document.getElementById('lobby').classList.add('hidden'); // Use class instead of style
+    document.getElementById('lobby').classList.add('hidden');
     document.getElementById('playersList').classList.remove('hidden');
     document.getElementById('startQuizButton').classList.remove('hidden');
-    console.log('Lobby created, code:', code); // Debug
+    console.log('Lobby created, code:', code);
 });
 
 socket.on('playerJoined', (players) => {
@@ -89,11 +89,11 @@ socket.on('playerJoined', (players) => {
         document.getElementById('playersList').classList.remove('hidden');
         document.getElementById('startQuizButton').classList.add('hidden');
     }
-    console.log('Players updated:', players); // Debug
+    console.log('Players updated:', players);
 });
 
-socket.on('quizStarted', (question) => {
-    console.log('Quiz started, question:', question);
+socket.on('quizStarted', (data) => {
+    console.log('Quiz started event received:', data);
     const lobbyInfo = document.getElementById('lobbyInfo');
     lobbyInfo.innerText = 'Quiz has started!';
     lobbyInfo.style.opacity = 1;
@@ -102,24 +102,26 @@ socket.on('quizStarted', (question) => {
     }, 1000);
     document.getElementById('playersList').classList.add('hidden');
     document.getElementById('startQuizButton').classList.add('hidden');
-    document.getElementById('quizContainer').classList.remove('hidden');
-    displayQuestion(question);
+    const quizContainer = document.getElementById('quizContainer');
+    quizContainer.classList.remove('hidden');
+    console.log('Quiz container classList after update:', quizContainer.classList);
+    displayQuestion(data);
 });
 
-socket.on('nextQuestion', (question) => {
-    console.log('Next question:', question); // Debug
-    displayQuestion(question);
+socket.on('nextQuestion', (data) => {
+    console.log('Next question:', data);
+    displayQuestion(data);
 });
 
 socket.on('quizEnded', () => {
-    console.log('Quiz ended'); // Debug
+    console.log('Quiz ended');
     document.getElementById('quizContainer').classList.add('hidden');
     document.getElementById('leaderboard').classList.remove('hidden');
     document.getElementById('leaderboardList').innerHTML = '<li>Waiting for the champs to finish...</li>';
 });
 
 socket.on('leaderboard', (players) => {
-    console.log('Leaderboard:', players); // Debug
+    console.log('Leaderboard:', players);
     const leaderboardList = document.getElementById('leaderboardList');
     leaderboardList.innerHTML = '';
     players.forEach((player, index) => {
@@ -137,7 +139,7 @@ socket.on('leaderboard', (players) => {
 socket.on('playerLeft', (players) => {
     const playersListItems = document.getElementById('playersListItems');
     playersListItems.innerHTML = players.map(p => `<div>${p.name}</div>`).join('');
-    console.log('Player left, updated players:', players); // Debug
+    console.log('Player left, updated players:', players);
 });
 
 socket.on('error', (err) => {
@@ -147,9 +149,37 @@ socket.on('error', (err) => {
     console.error('Socket.IO error:', err);
 });
 
-function displayQuestion(question) {
-    console.log('Displaying question:', question); // Debug
+// Function to speak text using Web Speech API with Hindi support
+function speakText(text, lang) {
+    console.log('Speaking:', text, 'in', lang);
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang; // 'en-US' or 'hi-IN'
+        // Ensure voices are loaded for Hindi
+        const voices = window.speechSynthesis.getVoices();
+        const voice = voices.find(v => v.lang === lang) || voices[0]; // Fallback to default if no match
+        utterance.voice = voice;
+        utterance.onstart = () => console.log(`Started speaking in ${lang} with voice:`, voice.name);
+        utterance.onerror = (e) => console.error('Speech error:', e);
+        window.speechSynthesis.speak(utterance);
+    } else {
+        alert('Text-to-Speech is not supported in your browser.');
+    }
+}
+
+// Load voices and log them for debugging
+window.speechSynthesis.onvoiceschanged = () => {
+    const voices = window.speechSynthesis.getVoices();
+    console.log('Available voices:', voices.map(v => ({ name: v.name, lang: v.lang })));
+};
+
+function displayQuestion(data) {
+    console.log('Displaying question:', data);
     const quizContainer = document.getElementById('quizContainer');
+    const question = data.question; // Extract question object
+    const lang = data.lang || 'en-US'; // Default to English if lang missing
+
+    // Clear previous content and populate quiz
     quizContainer.innerHTML = `
         <h2 id="question" class="text-2xl md:text-3xl mb-6 font-bold">${question.question}</h2>
         <ul id="options" class="space-y-3">
@@ -163,10 +193,19 @@ function displayQuestion(question) {
             }).join('')}
         </ul>
     `;
+
+    // Add Listen button
+    const listenButton = document.createElement('button');
+    listenButton.className = 'btn-secondary w-full mt-4';
+    listenButton.textContent = 'Listen';
+    listenButton.addEventListener('click', () => {
+        speakText(question.question, lang);
+    });
+    quizContainer.insertBefore(listenButton, document.getElementById('options'));
 }
 
 function submitAnswer(answer) {
-    console.log('Submitting answer:', answer); // Debug
+    console.log('Submitting answer:', answer);
     socket.emit('answerQuestion', { lobbyCode, answer });
 }
 

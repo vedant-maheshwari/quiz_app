@@ -53,7 +53,12 @@ const generateQuizQuestions = async (topic, numQuestions = 5, language = 'en') =
 
         try {
             const quizData = JSON.parse(cleanedText);
-            console.log('Parsed quiz questions:', quizData); // Debug
+            // Map language to TTS-compatible codes
+            const langCode = language === 'en' ? 'en-US' : 'hi-IN';
+            quizData.forEach(question => {
+                question.lang = langCode; // Add lang to each question
+            });
+            console.log('Parsed quiz questions:', quizData);
             return quizData;
         } catch (jsonError) {
             console.error("Error: Invalid JSON response:", jsonError);
@@ -99,6 +104,7 @@ io.on('connection', async (socket) => {
             players: [{ id: socket.id, name: hostName, score: 0, timeTaken: 0, currentQuestionIndex: 0 }],
             quizStarted: false,
             questions,
+            language, // Store the selected language
             startTime: Date.now()
         });
 
@@ -133,9 +139,12 @@ io.on('connection', async (socket) => {
                 return;
             }
             lobby.quizStarted = true;
-            lobby.startTime = Date.now(); // Reset start time for accurate timing
+            lobby.startTime = Date.now();
             console.log(`Quiz started for lobby ${lobbyCode}, First question:`, lobby.questions[0]);
-            io.to(lobbyCode).emit('quizStarted', lobby.questions[0]);
+            io.to(lobbyCode).emit('quizStarted', {
+                question: lobby.questions[0],
+                lang: lobby.language === 'en' ? 'en-US' : 'hi-IN' // Explicitly map language
+            });
         } else {
             console.log(`Unauthorized start attempt or lobby ${lobbyCode} not found by ${socket.id}`);
         }
@@ -153,7 +162,6 @@ io.on('connection', async (socket) => {
             const question = lobby.questions[player.currentQuestionIndex];
             const timeTaken = Date.now() - lobby.startTime;
 
-            // Normalize the answer for comparison
             const normalizedAnswer = answer.trim().toLowerCase();
             const normalizedCorrectAnswer = question.correct_answer.trim().toLowerCase();
 
@@ -168,7 +176,10 @@ io.on('connection', async (socket) => {
 
             if (player.currentQuestionIndex < lobby.questions.length - 1) {
                 player.currentQuestionIndex += 1;
-                socket.emit('nextQuestion', lobby.questions[player.currentQuestionIndex]);
+                socket.emit('nextQuestion', {
+                    question: lobby.questions[player.currentQuestionIndex],
+                    lang: lobby.language === 'en' ? 'en-US' : 'hi-IN'
+                });
                 console.log(`Next question sent to ${player.name}:`, lobby.questions[player.currentQuestionIndex]);
             } else {
                 socket.emit('quizEnded');
