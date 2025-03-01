@@ -45,7 +45,7 @@ const generateQuizQuestions = async (topic, numQuestions = 5, language = 'en') =
 
     try {
         const result = await model.generateContent(prompt);
-        console.log(result.response.text());
+        console.log('Generated quiz questions raw response:', result.response.text());
         const rawText = result.response.text().trim();
 
         // Remove any leading or trailing backticks and newlines
@@ -53,6 +53,7 @@ const generateQuizQuestions = async (topic, numQuestions = 5, language = 'en') =
 
         try {
             const quizData = JSON.parse(cleanedText);
+            console.log('Parsed quiz questions:', quizData); // Debug
             return quizData;
         } catch (jsonError) {
             console.error("Error: Invalid JSON response:", jsonError);
@@ -76,19 +77,19 @@ io.on('connection', async (socket) => {
     console.log('A user connected:', socket.id);
 
     // Create a new lobby
-    socket.on('createLobby', async (hostName, topic, numQuestions, language) => {
+    socket.on('createLobby', async ({ hostName, topic, numQuestions, language }) => {
         const lobbyCode = generateLobbyCode();
         let questions = [];
 
         try {
             questions = await generateQuizQuestions(topic, numQuestions, language);
+            if (!questions || !Array.isArray(questions) || questions.length === 0) {
+                console.error('No valid questions generated for lobby:', lobbyCode);
+                socket.emit('error', 'Failed to generate quiz questions');
+                return;
+            }
         } catch (error) {
             console.error('Error generating questions:', error);
-            socket.emit('error', 'Failed to generate questions');
-            return;
-        }
-
-        if (!questions) {
             socket.emit('error', 'Failed to generate questions');
             return;
         }
@@ -103,17 +104,22 @@ io.on('connection', async (socket) => {
 
         socket.join(lobbyCode);
         socket.emit('lobbyCreated', lobbyCode);
+        io.to(lobbyCode).emit('playerJoined', lobbies.get(lobbyCode).players);
+        console.log(`Lobby created: ${lobbyCode}, Players:`, lobbies.get(lobbyCode).players);
     });
 
     // Join an existing lobby
-    socket.on('joinLobby', (lobbyCode, playerName) => {
+    socket.on('joinLobby', ({ lobbyCode, playerName }) => {
+        console.log('Join request received:', { lobbyCode, playerName });
         const lobby = lobbies.get(lobbyCode);
         if (lobby) {
             lobby.players.push({ id: socket.id, name: playerName, score: 0, timeTaken: 0, currentQuestionIndex: 0 });
             socket.join(lobbyCode);
             io.to(lobbyCode).emit('playerJoined', lobby.players);
+            console.log(`Player ${playerName} joined lobby ${lobbyCode}, Players:`, lobby.players);
         } else {
-            socket.emit('lobbyNotFound');
+            socket.emit('error', 'Lobby not found');
+            console.log(`Lobby ${lobbyCode} not found for ${playerName}`);
         }
     });
 
@@ -123,18 +129,27 @@ io.on('connection', async (socket) => {
         if (lobby && socket.id === lobby.host) {
             if (!lobby.questions || lobby.questions.length === 0) {
                 socket.emit('error', 'No questions available to start the quiz');
+                console.log(`No questions for lobby ${lobbyCode}`);
                 return;
             }
             lobby.quizStarted = true;
+            lobby.startTime = Date.now(); // Reset start time for accurate timing
+            console.log(`Quiz started for lobby ${lobbyCode}, First question:`, lobby.questions[0]);
             io.to(lobbyCode).emit('quizStarted', lobby.questions[0]);
+        } else {
+            console.log(`Unauthorized start attempt or lobby ${lobbyCode} not found by ${socket.id}`);
         }
     });
 
     // Answer a question
-    socket.on('answerQuestion', (lobbyCode, answer) => {
+    socket.on('answerQuestion', ({ lobbyCode, answer }) => {
         const lobby = lobbies.get(lobbyCode);
         if (lobby && lobby.quizStarted) {
             const player = lobby.players.find(p => p.id === socket.id);
+            if (!player) {
+                console.log(`Player ${socket.id} not found in lobby ${lobbyCode}`);
+                return;
+            }
             const question = lobby.questions[player.currentQuestionIndex];
             const timeTaken = Date.now() - lobby.startTime;
 
@@ -142,7 +157,7 @@ io.on('connection', async (socket) => {
             const normalizedAnswer = answer.trim().toLowerCase();
             const normalizedCorrectAnswer = question.correct_answer.trim().toLowerCase();
 
-            if (player && normalizedCorrectAnswer === normalizedAnswer) {
+            if (normalizedCorrectAnswer === normalizedAnswer) {
                 player.score += 1;
                 console.log(`Player ${player.name} answered correctly. New score: ${player.score}`);
             } else {
@@ -154,9 +169,11 @@ io.on('connection', async (socket) => {
             if (player.currentQuestionIndex < lobby.questions.length - 1) {
                 player.currentQuestionIndex += 1;
                 socket.emit('nextQuestion', lobby.questions[player.currentQuestionIndex]);
+                console.log(`Next question sent to ${player.name}:`, lobby.questions[player.currentQuestionIndex]);
             } else {
                 socket.emit('quizEnded');
                 player.completed = true;
+                console.log(`Player ${player.name} completed quiz in lobby ${lobbyCode}`);
                 checkIfAllCompleted(lobbyCode);
             }
         }
@@ -170,7 +187,7 @@ io.on('connection', async (socket) => {
         if (allCompleted) {
             const sortedPlayers = lobby.players.sort((a, b) => b.score - a.score || a.timeTaken - b.timeTaken);
             io.to(lobbyCode).emit('leaderboard', sortedPlayers);
-            console.log('Leaderboard:', sortedPlayers);
+            console.log(`Leaderboard for lobby ${lobbyCode}:`, sortedPlayers);
         }
     }
 
@@ -182,12 +199,12 @@ io.on('connection', async (socket) => {
             if (playerIndex !== -1) {
                 const leavingPlayer = lobby.players.splice(playerIndex, 1)[0];
                 if (socket.id === lobby.host) {
-                    // If the host disconnects, destroy the lobby
                     io.to(lobbyCode).emit('lobbyClosed');
                     lobbies.delete(lobbyCode);
+                    console.log(`Host disconnected, lobby ${lobbyCode} closed`);
                 } else {
-                    // Notify remaining players
                     io.to(lobbyCode).emit('playerLeft', lobby.players);
+                    console.log(`Player ${leavingPlayer.name} left lobby ${lobbyCode}, Remaining:`, lobby.players);
                 }
             }
         }

@@ -5,35 +5,103 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz App</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <div id="app">
-        <h1>Quiz App</h1>
-        <div id="lobby">
-            <input type="text" id="hostName" placeholder="Enter your name">
-            <input type="text" id="topic" placeholder="Enter topic">
-            <input type="number" id="numQuestions" placeholder="Number of questions" min="1" value="5">
-            <select id="language">
-                <option value="en">English</option>
-                <option value="hi">Hindi</option>
-            </select>
-            <button onclick="createLobby()">Create Lobby</button>
-            <input type="text" id="lobbyCode" placeholder="Enter lobby code">
-            <input type="text" id="playerName" placeholder="Enter your name">
-            <button onclick="joinLobby()">Join Lobby</button>
+<body class="py-8 px-4 md:py-10">
+    <div id="app" class="max-w-4xl mx-auto relative">
+        <div class="text-center mb-8 relative">
+            <h1>Quiz App</h1>
+            <p class="text-xl text-gray-600 mt-1 font-bold">The Ultimate Trivia Challenge!</p>
+            <div class="speech-bubble">Let's play!</div>
         </div>
-        <div id="lobbyInfo"></div>
-        <div id="playersList" class="hidden"></div>
-        <button id="startQuizButton" class="hidden">Start Quiz</button>
-        <div id="quizContainer" class="hidden">
-            <h2 id="question"></h2>
-            <ul id="options"></ul>
+
+        <!-- Lobby Section -->
+        <div id="lobby" class="space-y-8">
+            <!-- Initial Screen -->
+            <div id="initialScreen" class="card relative overflow-hidden">
+                <div class="host-character"></div>
+                <div class="pow-element"></div>
+                <h2 class="text-2xl mb-6">Ready for the Showdown?</h2>
+                <button onclick="showJoinForm()" class="btn-secondary w-full mt-4">Join a Lobby!</button>
+                <button onclick="showCreateForm()" class="btn-primary w-full mt-4">Host a Lobby!</button>
+            </div>
+
+            <!-- Create Lobby Form -->
+            <div id="createForm" class="card relative overflow-hidden hidden">
+                <div class="host-character"></div>
+                <div class="pow-element"></div>
+                <h2 class="text-2xl mb-6">Host the Showdown</h2>
+                <div class="space-y-5">
+                    <div>
+                        <label>Your Name</label>
+                        <input type="text" id="hostName" placeholder="What should we call you, host?" class="input-field">
+                    </div>
+                    <div>
+                        <label>Quiz Theme</label>
+                        <input type="text" id="topic" placeholder="Pick a wacky topic..." class="input-field">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label>Questions</label>
+                            <input type="number" id="numQuestions" min="1" value="5" class="input-field">
+                        </div>
+                        <div>
+                            <label>Language</label>
+                            <select id="language" class="input-field">
+                                <option value="en">English</option>
+                                <option value="hi">Hindi</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="createLobby()" class="btn-primary w-full mt-4">Launch the Show!</button>
+                    <button onclick="backToInitial()" class="btn-secondary w-full mt-4">Back</button>
+                </div>
+            </div>
+
+            <!-- Join Lobby Form -->
+            <div id="joinForm" class="card relative overflow-hidden hidden">
+                <div class="contestant-character"></div>
+                <h2 class="text-2xl mb-6">Join the Fun</h2>
+                <div class="space-y-5">
+                    <div>
+                        <label>Lobby Code</label>
+                        <input type="text" id="lobbyCode" placeholder="Enter the secret code..." class="input-field">
+                    </div>
+                    <div>
+                        <label>Your Name</label>
+                        <input type="text" id="playerName" placeholder="What's your contestant name?" class="input-field">
+                    </div>
+                    <button onclick="joinLobby()" class="btn-secondary w-full mt-4">Jump In!</button>
+                    <button onclick="backToInitial()" class="btn-primary w-full mt-4">Back</button>
+                </div>
+            </div>
         </div>
-        <div id="leaderboard" class="hidden">
-            <h2>Leaderboard</h2>
-            <ul id="leaderboardList"></ul>
+
+        <!-- Lobby Info -->
+        <div id="lobbyInfo" class="mt-8" style="display: none;"></div>
+
+        <!-- Players List -->
+        <div id="playersList" class="mt-8 card hidden">
+            <h2 class="text-2xl mb-4">Contestants Ready!</h2>
+            <div id="playersListItems" class="space-y-2 text-lg"></div>
+        </div>
+
+        <!-- Start Quiz Button -->
+        <button id="startQuizButton" class="w-full mt-6 btn-primary text-xl py-4 hidden">Start the Trivia Battle!</button>
+
+        <!-- Quiz Section -->
+        <div id="quizContainer" class="mt-8 card hidden">
+            <h2 id="question" class="text-2xl md:text-3xl mb-6 font-bold"></h2>
+            <ul id="options" class="space-y-3"></ul>
+        </div>
+
+        <!-- Leaderboard -->
+        <div id="leaderboard" class="mt-8 card hidden">
+            <h2 class="text-2xl md:text-3xl mb-4">Champion Board</h2>
+            <ul id="leaderboardList" class="mt-4 space-y-2 text-lg"></ul>
         </div>
     </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
